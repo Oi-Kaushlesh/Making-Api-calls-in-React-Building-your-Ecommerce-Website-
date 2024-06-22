@@ -7,21 +7,31 @@ import spinner from "./spinner.gif";
 function App() {
   const [loaderStatus, setLoaderStatus] = useState(false);
   const [movies, setMovies] = useState([]);
+  const [error, setError] = useState(null);
 
   async function fetchMovieHandler() {
     setLoaderStatus(true);
-    const response = await fetch("https://swapi.py4e.com/api/films/");
-    const data = await response.json();
-    const transformedMovie = data.results.map((movieData) => {
-      return {
-        id: movieData.episode_id,
-        title: movieData.title,
-        openingText: movieData.opening_crawl,
-        releaseDate: movieData.release_date,
-      };
-    });
-    setLoaderStatus(false);
-    setMovies(transformedMovie);
+    setError(null);
+    try {
+      const response = await fetch("https://swapi.py4e.com/api/films/");
+      if (!response.ok) {
+        throw new Error('Something went wrong');
+      }
+      const data = await response.json();
+      const transformedMovie = data.results.map((movieData) => {
+        return {
+          id: movieData.episode_id,
+          title: movieData.title,
+          openingText: movieData.opening_crawl,
+          releaseDate: movieData.release_date,
+        };
+      });
+      setLoaderStatus(false);
+      setMovies(transformedMovie);
+    } catch (error) {
+      setError(error.message);
+    }
+    setLoaderStatus(false)
   }
   return (
     <React.Fragment>
@@ -30,6 +40,7 @@ function App() {
       </section>
       <section>
         {!loaderStatus && <MoviesList movies={movies} />}
+        {!loaderStatus && error && <p>{error}</p>}
         {loaderStatus && (
           <div class="text-center">
             <img
