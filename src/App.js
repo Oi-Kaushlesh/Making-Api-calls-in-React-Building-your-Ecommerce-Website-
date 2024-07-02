@@ -14,21 +14,25 @@ function App() {
     setLoaderStatus(true);
     setError(null);
     try {
-      const response = await fetch("https://swapi.py4e.com/api/films/");
+      const response = await fetch(
+        "https://sharpener-react-project-default-rtdb.firebaseio.com/movies.json"
+      );
       if (!response.ok) {
         throw new Error("Something went wrong");
       }
       const data = await response.json();
-      const transformedMovie = data.results.map((movieData) => {
-        return {
-          id: movieData.episode_id,
-          title: movieData.title,
-          openingText: movieData.opening_crawl,
-          releaseDate: movieData.release_date,
-        };
-      });
+      const loadMovie = [];
+      for (const key in data) {
+        loadMovie.push({
+          id: key,
+          title: data[key].title,
+          openingText: data[key].openingText,
+          releaseDate: data[key].releaseDate,
+        });
+      }
+
       setLoaderStatus(false);
-      setMovies(transformedMovie);
+      setMovies(loadMovie);
     } catch (error) {
       setError(error.message);
     }
@@ -37,8 +41,28 @@ function App() {
   useEffect(() => {
     fetchMovieHandler();
   }, [fetchMovieHandler]);
-  function addMovieHandler(movie) {
-    console.log(movie);
+
+  async function addMovieHandler(movie) {
+    const response = await fetch(
+      "https://sharpener-react-project-default-rtdb.firebaseio.com/movies.json",
+      {
+        method: "POST",
+        body: JSON.stringify(movie),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    const data = await response.json();
+    console.log(data);
+  }
+  async function deleteFunction() {
+    await fetch(
+      "https://sharpener-react-project-default-rtdb.firebaseio.com/movies.json",
+      {
+        method: "DELETE",
+      }
+    );
   }
 
   return (
@@ -50,7 +74,9 @@ function App() {
         <button onClick={fetchMovieHandler}>Fetch Movies</button>
       </section>
       <section>
-        {!loaderStatus && <MoviesList movies={movies} />}
+        {!loaderStatus && (
+          <MoviesList movies={movies} delete={deleteFunction} />
+        )}
         {!loaderStatus && error && <p>{error}</p>}
         {loaderStatus && (
           <div className="text-center">
